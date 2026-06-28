@@ -1,4 +1,4 @@
-package com.example.nusuru.ResQ254
+package com.resq254.app.ResQ254
 
 import org.junit.Test
 

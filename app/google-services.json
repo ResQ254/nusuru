@@ -1,0 +1,30 @@
+{
+  "project_info": {
+    "project_number": "361327607079",
+    "firebase_url": "https://resq254-default-rtdb.europe-west1.firebasedatabase.app",
+    "project_id": "resq254",
+    "storage_bucket": "resq254.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:361327607079:android:523b8a09bc3880973ebd02",
+        "android_client_info": {
+          "package_name": "com.resq254.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBS4swHJeNOk5zynEBw5gY-mchzp2vk5Hs"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

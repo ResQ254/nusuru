@@ -1,4 +1,4 @@
-package com.example.nusuru.ResQ254.ui.theme
+package com.resq254.app.ui.theme
 
 import androidx.compose.material3.Typography
 import androidx.compose.ui.text.TextStyle
