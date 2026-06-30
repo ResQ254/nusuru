@@ -96,7 +96,10 @@ service cloud.firestore {
       allow read: if isAuth();
 
       // Only admins can manage service providers
-      allow write: if isAdmin();
+      allow create: if isAuth(); // providers can register
+
+      allow update: if isAuth() &&
+          (request.auth.uid == providerId || isAdmin());
     }
 
   }
