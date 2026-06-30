@@ -2,10 +2,11 @@ package com.resq254.app.ui.theme
 
 import androidx.compose.ui.graphics.Color
 
-val Purple80 = Color(0xFFD0BCFF)
-val PurpleGrey80 = Color(0xFFCCC2DC)
-val Pink80 = Color(0xFFEFB8C8)
-
-val Purple40 = Color(0xFF6650a4)
-val PurpleGrey40 = Color(0xFF625b71)
-val Pink40 = Color(0xFF7D5260)
+val BgPage = Color(0xFFFAFAF8)
+val TextPrimary = Color(0xFF1A1A18)
+val TextSecondary = Color(0xFF8A8A86)
+val TextMuted = Color(0xFFB5B5B0)
+val BorderColor = Color(0xFFEEEEE8)
+val AccentRed = Color(0xFFE24B4A)
+val AccentRedDark = Color(0xFFA32D2D)
+val SurfaceWhite = Color(0xFFFFFFFF)
