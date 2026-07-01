@@ -1,0 +1,103 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ─── Helper functions ───────────────────────────────────────────────
+
+    // Check if the request is from a signed-in user
+    function isAuth() {
+      return request.auth != null;
+    }
+
+    // Check if the signed-in user owns this document
+    function isOwner(uid) {
+      return request.auth.uid == uid;
+    }
+
+    // Check if the signed-in user is an admin
+    function isAdmin() {
+      return isAuth() &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+    }
+
+    // Check if the signed-in user is a verified guardian
+    function isGuardian() {
+      return isAuth() &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.is_guardian == true;
+    }
+
+    // ─── USERS collection ───────────────────────────────────────────────
+    match /users/{uid} {
+      // Anyone can read their own profile; admins can read all
+      allow read: if isOwner(uid) || isAdmin();
+
+      // Only the user themselves can create their own profile
+      allow create: if isOwner(uid) && isAuth();
+
+      // Users can update their own profile, but cannot self-promote to admin
+      allow update: if isOwner(uid) &&
+                       request.resource.data.role == resource.data.role;
+
+      // Only admins can delete users
+      allow delete: if isAdmin();
+    }
+
+    // ─── INCIDENTS collection ────────────────────────────────────────────
+    match /incidents/{incidentId} {
+      // Any signed-in user can read incidents (needed for nearby alert display)
+      allow read: if isAuth();
+
+      // Any signed-in user can report an incident
+      allow create: if isAuth() &&
+                       request.resource.data.reported_by_uid == request.auth.uid &&
+                       request.resource.data.status == 'active';
+
+      // Reporter or admin can update (e.g. resolve or add notes)
+      allow update: if isAuth() && (
+                       resource.data.reported_by_uid == request.auth.uid ||
+                       isAdmin()
+                    );
+
+      // Only admins can delete incidents (audit trail matters)
+      allow delete: if isAdmin();
+    }
+
+    // ─── ALERTS collection ───────────────────────────────────────────────
+    match /alerts/{alertId} {
+      // Recipients and admins can read their alerts
+      allow read: if isAuth() && (
+                     resource.data.recipient_uid == request.auth.uid ||
+                     isAdmin()
+                  );
+
+      // Alerts are created by the system (Cloud Functions), not clients
+      allow create: if isAdmin();
+
+      // Recipients can update their own alert status (e.g. 'seen', 'responded')
+      allow update: if isAuth() &&
+                       resource.data.recipient_uid == request.auth.uid;
+
+      allow delete: if isAdmin();
+    }
+
+    // ─── EMERGENCY_CONTACTS collection ───────────────────────────────────
+    match /emergency_contacts/{contactId} {
+      // All signed-in users can read (core feature of the app)
+      allow read: if isAuth();
+
+      // Only admins can add/edit/delete verified emergency contacts
+      allow write: if isAdmin();
+    }
+
+    // ─── SERVICE_PROVIDERS collection ────────────────────────────────────
+    match /service_providers/{providerId} {
+      // All signed-in users can read service providers
+      allow read: if isAuth();
+
+      // Only admins can manage service providers
+      allow write: if isAdmin();
+    }
+
+  }
+}
