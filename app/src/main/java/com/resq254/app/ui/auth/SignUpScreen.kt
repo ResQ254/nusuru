@@ -15,17 +15,16 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.resq254.app.ui.theme.AccentRed
-import com.resq254.app.ui.theme.BgPage
-import com.resq254.app.ui.theme.TextPrimary
-import com.resq254.app.ui.theme.TextSecondary
+import com.resq254.app.ui.theme.*
 
 @Composable
 fun SignUpScreen(
     role: String?,
     onSignUpSuccess: () -> Unit,
+    onGoogleSignUpClick: () -> Unit,
     onBackToLogin: () -> Unit
 ) {
+    // Uses UserRole declared in AuthOptionScreen.kt
     val isProvider = role == UserRole.SERVICE_PROVIDER.name
 
     // Common Form States
@@ -35,17 +34,17 @@ fun SignUpScreen(
     var password by remember { mutableStateOf("") }
 
     // Service Provider Specific States
-    var serviceType by remember { mutableStateOf("") } // e.g., Ambulance, Fire, Police
+    var serviceType by remember { mutableStateOf("") }
     var licenseNumber by remember { mutableStateOf("") }
 
-    Box(modifier = Modifier.fillMaxSize().background(BgPage).padding(24.dp)) {
+    Box(modifier = Modifier.fillMaxSize().background(SurfaceWhite).padding(24.dp)) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .verticalScroll(rememberScrollState()),
-            verticalArrangement = Arrangement.Center
+            verticalArrangement = Arrangement.Top
         ) {
-            Spacer(modifier = Modifier.height(48.dp))
+            Spacer(modifier = Modifier.height(24.dp))
 
             Text(
                 text = if (isProvider) "Register Responder Unit" else "Create User Account",
@@ -59,7 +58,42 @@ fun SignUpScreen(
                 color = TextSecondary,
                 fontSize = 13.sp
             )
-            Spacer(modifier = Modifier.height(32.dp))
+            Spacer(modifier = Modifier.height(28.dp))
+
+            // Google Sign-Up Action
+            OutlinedButton(
+                onClick = onGoogleSignUpClick,
+                modifier = Modifier.fillMaxWidth().height(48.dp),
+                shape = RoundedCornerShape(14.dp),
+                colors = ButtonDefaults.outlinedButtonColors(containerColor = SurfaceWhite),
+                border = androidx.compose.foundation.BorderStroke(1.dp, BorderColor)
+            ) {
+                Text(
+                    text = if (isProvider) "Sign up organization with Google" else "Continue with Google",
+                    color = TextPrimary,
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.SemiBold
+                )
+            }
+
+            Spacer(modifier = Modifier.height(20.dp))
+
+            // Visual "OR" Divider
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                HorizontalDivider(modifier = Modifier.weight(1f), color = BorderColor)
+                Text(
+                    text = "or register via form",
+                    color = TextSecondary,
+                    fontSize = 12.sp,
+                    modifier = Modifier.padding(horizontal = 16.dp)
+                )
+                HorizontalDivider(modifier = Modifier.weight(1f), color = BorderColor)
+            }
+
+            Spacer(modifier = Modifier.height(20.dp))
 
             // Field 1: Name / Organization Name
             OutlinedTextField(
@@ -67,7 +101,15 @@ fun SignUpScreen(
                 onValueChange = { name = it },
                 label = { Text(if (isProvider) "Organization / Agency Name" else "Full Name") },
                 modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(12.dp)
+                shape = RoundedCornerShape(14.dp),
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedBorderColor = SafeGreen,
+                    unfocusedBorderColor = BorderColor,
+                    focusedLabelColor = SafeGreen,
+                    unfocusedLabelColor = TextSecondary,
+                    focusedContainerColor = AppCardLight,
+                    unfocusedContainerColor = AppCardLight
+                )
             )
             Spacer(modifier = Modifier.height(16.dp))
 
@@ -77,7 +119,15 @@ fun SignUpScreen(
                 onValueChange = { email = it },
                 label = { Text("Email Address") },
                 modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(12.dp)
+                shape = RoundedCornerShape(14.dp),
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedBorderColor = SafeGreen,
+                    unfocusedBorderColor = BorderColor,
+                    focusedLabelColor = SafeGreen,
+                    unfocusedLabelColor = TextSecondary,
+                    focusedContainerColor = AppCardLight,
+                    unfocusedContainerColor = AppCardLight
+                )
             )
             Spacer(modifier = Modifier.height(16.dp))
 
@@ -87,7 +137,15 @@ fun SignUpScreen(
                 onValueChange = { phone = it },
                 label = { Text("Phone Number") },
                 modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(12.dp)
+                shape = RoundedCornerShape(14.dp),
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedBorderColor = SafeGreen,
+                    unfocusedBorderColor = BorderColor,
+                    focusedLabelColor = SafeGreen,
+                    unfocusedLabelColor = TextSecondary,
+                    focusedContainerColor = AppCardLight,
+                    unfocusedContainerColor = AppCardLight
+                )
             )
             Spacer(modifier = Modifier.height(16.dp))
 
@@ -98,7 +156,15 @@ fun SignUpScreen(
                     onValueChange = { serviceType = it },
                     label = { Text("Service Type (Ambulance / Fire / Police)") },
                     modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(12.dp)
+                    shape = RoundedCornerShape(14.dp),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = SafeGreen,
+                        unfocusedBorderColor = BorderColor,
+                        focusedLabelColor = SafeGreen,
+                        unfocusedLabelColor = TextSecondary,
+                        focusedContainerColor = AppCardLight,
+                        unfocusedContainerColor = AppCardLight
+                    )
                 )
                 Spacer(modifier = Modifier.height(16.dp))
 
@@ -107,7 +173,15 @@ fun SignUpScreen(
                     onValueChange = { licenseNumber = it },
                     label = { Text("Operating License / Badge Number") },
                     modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(12.dp)
+                    shape = RoundedCornerShape(14.dp),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = SafeGreen,
+                        unfocusedBorderColor = BorderColor,
+                        focusedLabelColor = SafeGreen,
+                        unfocusedLabelColor = TextSecondary,
+                        focusedContainerColor = AppCardLight,
+                        unfocusedContainerColor = AppCardLight
+                    )
                 )
                 Spacer(modifier = Modifier.height(16.dp))
             }
@@ -119,7 +193,15 @@ fun SignUpScreen(
                 label = { Text("Password") },
                 visualTransformation = PasswordVisualTransformation(),
                 modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(12.dp)
+                shape = RoundedCornerShape(14.dp),
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedBorderColor = SafeGreen,
+                    unfocusedBorderColor = BorderColor,
+                    focusedLabelColor = SafeGreen,
+                    unfocusedLabelColor = TextSecondary,
+                    focusedContainerColor = AppCardLight,
+                    unfocusedContainerColor = AppCardLight
+                )
             )
 
             Spacer(modifier = Modifier.height(32.dp))
@@ -128,13 +210,13 @@ fun SignUpScreen(
             Button(
                 onClick = onSignUpSuccess,
                 modifier = Modifier.fillMaxWidth().height(48.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = AccentRed),
+                colors = ButtonDefaults.buttonColors(containerColor = SafeGreen),
                 shape = RoundedCornerShape(14.dp)
             ) {
-                Text("Register", color = Color.White, fontSize = 14.sp, fontWeight = FontWeight.Medium)
+                Text("Register", color = Color.White, fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
             }
 
-            Spacer(modifier = Modifier.height(24.dp))
+            Spacer(modifier = Modifier.height(80.dp))
         }
 
         // Bottom link back to login

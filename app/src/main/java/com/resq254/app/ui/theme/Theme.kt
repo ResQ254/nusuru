@@ -10,7 +10,7 @@ import androidx.compose.ui.unit.sp
 
 private val LightColors = lightColorScheme(
     primary = AccentRed,
-    background = BgPage,
+    background = SurfaceWhite,
     surface = SurfaceWhite,
     onPrimary = SurfaceWhite,
     onBackground = TextPrimary,

@@ -2,6 +2,7 @@ package com.resq254.app.ui.onboarding
 
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -32,7 +33,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.resq254.app.ui.theme.AccentRed
-import com.resq254.app.ui.theme.BgPage
+import com.resq254.app.ui.theme.SurfaceWhite
 import com.resq254.app.ui.theme.BorderColor
 import com.resq254.app.ui.theme.TextPrimary
 import com.resq254.app.ui.theme.TextSecondary
@@ -53,7 +54,7 @@ fun OnboardingScreen(onFinished: () -> Unit, onLoginClicked: () -> Unit) {
     val pagerState = rememberPagerState(pageCount = { pages.size })
     val scope = rememberCoroutineScope()
 
-    Box(modifier = Modifier.fillMaxSize().background(BgPage)) {
+    Box(modifier = Modifier.fillMaxSize().background(SurfaceWhite)) {
         Column(modifier = Modifier.fillMaxSize()) {
 
             HorizontalPager(state = pagerState, modifier = Modifier.weight(1f)) { page ->
@@ -97,12 +98,17 @@ fun OnboardingScreen(onFinished: () -> Unit, onLoginClicked: () -> Unit) {
                         Text("Get started", color = Color.White, fontSize = 13.sp, fontWeight = FontWeight.Medium)
                     }
                     Box(modifier = Modifier.height(8.dp))
+
+                    // Fixed: Added clickable handler to link out to login page seamlessly
                     Text(
                         text = "I already have an account",
                         color = TextSecondary,
                         fontSize = 11.sp,
                         textAlign = TextAlign.Center,
-                        modifier = Modifier.fillMaxWidth().padding(vertical = 6.dp)
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable { onLoginClicked() }
+                            .padding(vertical = 6.dp)
                     )
                 }
             }
@@ -163,4 +169,3 @@ private fun OnboardingIcon(type: IconType) {
         }
     }
 }
-
