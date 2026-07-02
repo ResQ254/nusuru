@@ -30,7 +30,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.material3.Text
 import com.resq254.app.ui.theme.AccentRed
-import com.resq254.app.ui.theme.BgPage
+import com.resq254.app.ui.theme.SurfaceWhite
 import com.resq254.app.ui.theme.TextPrimary
 import kotlinx.coroutines.delay
 
@@ -71,7 +71,7 @@ fun SplashScreen(onTimeout: () -> Unit) {
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(BgPage),
+            .background(SurfaceWhite),
         contentAlignment = Alignment.Center
     ) {
         Column(horizontalAlignment = Alignment.CenterHorizontally) {

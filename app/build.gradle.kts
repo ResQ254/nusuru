@@ -47,6 +47,7 @@ dependencies {
     implementation(libs.androidx.compose.ui.tooling.preview)
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
+    implementation("androidx.compose.material:material-icons-extended")
     implementation("androidx.navigation:navigation-compose:2.8.8")
     implementation("androidx.constraintlayout:constraintlayout:2.1.4")
     implementation("androidx.compose.foundation:foundation:1.7.0")

@@ -14,11 +14,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.resq254.app.ui.theme.AccentRed
-import com.resq254.app.ui.theme.BgPage
-import com.resq254.app.ui.theme.BorderColor
-import com.resq254.app.ui.theme.TextPrimary
-import com.resq254.app.ui.theme.TextSecondary
+import com.resq254.app.ui.theme.*
 
 enum class UserRole { USER, SERVICE_PROVIDER }
 
@@ -29,7 +25,12 @@ fun AuthOptionScreen(
 ) {
     var selectedRole by remember { mutableStateOf<UserRole?>(null) }
 
-    Box(modifier = Modifier.fillMaxSize().background(BgPage).padding(24.dp)) {
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(SurfaceWhite) // Fixed theme token continuity
+            .padding(24.dp)
+    ) {
         Column(
             modifier = Modifier.fillMaxSize(),
             verticalArrangement = Arrangement.Center,
@@ -40,21 +41,22 @@ fun AuthOptionScreen(
                 color = TextPrimary,
                 fontSize = 22.sp,
                 fontWeight = FontWeight.Bold,
+                letterSpacing = (-0.3).sp,
                 textAlign = TextAlign.Center
             )
             Spacer(modifier = Modifier.height(8.dp))
             Text(
                 text = "Select your account type to get started.",
-                color = TextSecondary,
+                color = TextSub, // Standardized theme color
                 fontSize = 14.sp,
                 textAlign = TextAlign.Center
             )
             Spacer(modifier = Modifier.height(32.dp))
 
-            // Option 1: Standard User
+            // Option 1: Standard User (Fixed logic header mismatch)
             RoleCard(
-                title = "I can assist",
-                description = "Register as a client to report emergencies and reach responders instantly.",
+                title = "I need emergency assistance",
+                description = "Register as a citizen client to report emergencies, broadcast alerts, and reach nearby responders instantly.",
                 isSelected = selectedRole == UserRole.USER,
                 onClick = { selectedRole = UserRole.USER }
             )
@@ -64,7 +66,7 @@ fun AuthOptionScreen(
             // Option 2: Service Provider
             RoleCard(
                 title = "I am a responder / provider",
-                description = "Register an ambulance, police unit, or fire response team to save lives.",
+                description = "Register an ambulance, police unit, medical center, or fire response team to coordinate dispatch and save lives.",
                 isSelected = selectedRole == UserRole.SERVICE_PROVIDER,
                 onClick = { selectedRole = UserRole.SERVICE_PROVIDER }
             )
@@ -75,22 +77,30 @@ fun AuthOptionScreen(
             Button(
                 onClick = { selectedRole?.let { onRoleSelected(it) } },
                 enabled = selectedRole != null,
-                modifier = Modifier.fillMaxWidth().height(48.dp),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(48.dp),
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = AccentRed,
+                    containerColor = SafeGreen, // Aligned branding token
                     disabledContainerColor = BorderColor
                 ),
                 shape = RoundedCornerShape(14.dp)
             ) {
-                Text("Continue", color = Color.White, fontSize = 14.sp, fontWeight = FontWeight.Medium)
+                Text(
+                    text = "Continue",
+                    color = Color.White,
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.SemiBold
+                )
             }
         }
 
         // Bottom link back to login
         Text(
             text = "Already have an account? Sign In",
-            color = TextSecondary,
-            fontSize = 12.sp,
+            color = TextSub,
+            fontSize = 13.sp,
+            fontWeight = FontWeight.Medium,
             modifier = Modifier
                 .align(Alignment.BottomCenter)
                 .padding(bottom = 16.dp)
@@ -111,19 +121,29 @@ fun RoleCard(
             .fillMaxWidth()
             .border(
                 width = if (isSelected) 2.dp else 1.dp,
-                color = if (isSelected) AccentRed else BorderColor,
+                color = if (isSelected) SafeGreen else BorderColor,
                 shape = RoundedCornerShape(14.dp)
             )
             .clickable { onClick() },
         colors = CardDefaults.cardColors(
-            containerColor = if (isSelected) AccentRed.copy(alpha = 0.05f) else Color.Transparent
+            containerColor = if (isSelected) SafeGreen.copy(alpha = 0.06f) else AppCardLight
         ),
         shape = RoundedCornerShape(14.dp)
     ) {
         Column(modifier = Modifier.padding(20.dp)) {
-            Text(text = title, color = TextPrimary, fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
-            Spacer(modifier = Modifier.height(4.dp))
-            Text(text = description, color = TextSecondary, fontSize = 12.sp, lineHeight = 18.sp)
+            Text(
+                text = title,
+                color = if (isSelected) SafeGreen else TextPrimary,
+                fontSize = 15.sp,
+                fontWeight = FontWeight.SemiBold
+            )
+            Spacer(modifier = Modifier.height(6.dp))
+            Text(
+                text = description,
+                color = TextSub,
+                fontSize = 12.sp,
+                lineHeight = 18.sp
+            )
         }
     }
 }
