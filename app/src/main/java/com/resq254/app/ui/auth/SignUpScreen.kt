@@ -15,6 +15,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.resq254.app.data.AuthManager
 import com.resq254.app.ui.theme.AccentRed
 import com.resq254.app.ui.theme.BgPage
 import com.resq254.app.ui.theme.TextPrimary
@@ -37,6 +38,10 @@ fun SignUpScreen(
     // Service Provider Specific States
     var serviceType by remember { mutableStateOf("") } // e.g., Ambulance, Fire, Police
     var licenseNumber by remember { mutableStateOf("") }
+
+    // UI feedback states
+    var isLoading by remember { mutableStateOf(false) }
+    var errorMessage by remember { mutableStateOf<String?>(null) }
 
     Box(modifier = Modifier.fillMaxSize().background(BgPage).padding(24.dp)) {
         Column(
@@ -122,16 +127,67 @@ fun SignUpScreen(
                 shape = RoundedCornerShape(12.dp)
             )
 
-            Spacer(modifier = Modifier.height(32.dp))
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // Error message
+            errorMessage?.let { message ->
+                Text(
+                    text = message,
+                    color = AccentRed,
+                    fontSize = 12.sp
+                )
+                Spacer(modifier = Modifier.height(16.dp))
+            }
 
             // Submit Button
             Button(
-                onClick = onSignUpSuccess,
+                onClick = {
+                    when {
+                        name.isBlank() -> errorMessage = "Please enter your name"
+                        email.isBlank() -> errorMessage = "Please enter your email"
+                        password.length < 6 -> errorMessage = "Password must be at least 6 characters"
+                        else -> {
+                            errorMessage = null
+                            isLoading = true
+
+                            val profile = buildMap<String, Any?> {
+                                put("name", name.trim())
+                                put("email", email.trim())
+                                put("phone", phone.trim())
+                                put("role", if (isProvider) "service_provider" else "user")
+                                if (isProvider) {
+                                    put("serviceType", serviceType.trim())
+                                    put("licenseNumber", licenseNumber.trim())
+                                }
+                            }
+
+                            AuthManager.signUp(
+                                email = email.trim(),
+                                password = password,
+                                profile = profile,
+                                onSuccess = {
+                                    isLoading = false
+                                    onSignUpSuccess()
+                                },
+                                onError = { message ->
+                                    isLoading = false
+                                    errorMessage = message
+                                }
+                            )
+                        }
+                    }
+                },
+                enabled = !isLoading,
                 modifier = Modifier.fillMaxWidth().height(48.dp),
                 colors = ButtonDefaults.buttonColors(containerColor = AccentRed),
                 shape = RoundedCornerShape(14.dp)
             ) {
-                Text("Register", color = Color.White, fontSize = 14.sp, fontWeight = FontWeight.Medium)
+                Text(
+                    text = if (isLoading) "Creating account..." else "Register",
+                    color = Color.White,
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.Medium
+                )
             }
 
             Spacer(modifier = Modifier.height(24.dp))

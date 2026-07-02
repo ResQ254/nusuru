@@ -14,6 +14,7 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.resq254.app.data.AuthManager
 import com.resq254.app.ui.theme.AccentRed
 import com.resq254.app.ui.theme.BgPage
 import com.resq254.app.ui.theme.TextPrimary
@@ -27,6 +28,8 @@ fun LoginScreen(
 ) {
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
+    var isLoading by remember { mutableStateOf(false) }
+    var errorMessage by remember { mutableStateOf<String?>(null) }
 
     Box(modifier = Modifier.fillMaxSize().background(BgPage).padding(24.dp)) {
         Column(
@@ -78,16 +81,53 @@ fun LoginScreen(
                 )
             }
 
-            Spacer(modifier = Modifier.height(32.dp))
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // Error message
+            errorMessage?.let { message ->
+                Text(
+                    text = message,
+                    color = AccentRed,
+                    fontSize = 12.sp
+                )
+                Spacer(modifier = Modifier.height(16.dp))
+            }
 
             // Login Button
             Button(
-                onClick = onLoginSuccess,
+                onClick = {
+                    when {
+                        email.isBlank() -> errorMessage = "Please enter your email"
+                        password.isBlank() -> errorMessage = "Please enter your password"
+                        else -> {
+                            errorMessage = null
+                            isLoading = true
+                            AuthManager.login(
+                                email = email.trim(),
+                                password = password,
+                                onSuccess = {
+                                    isLoading = false
+                                    onLoginSuccess()
+                                },
+                                onError = { message ->
+                                    isLoading = false
+                                    errorMessage = message
+                                }
+                            )
+                        }
+                    }
+                },
+                enabled = !isLoading,
                 modifier = Modifier.fillMaxWidth().height(48.dp),
                 colors = ButtonDefaults.buttonColors(containerColor = TextPrimary),
                 shape = RoundedCornerShape(14.dp)
             ) {
-                Text("Sign In", color = Color.White, fontSize = 14.sp, fontWeight = FontWeight.Medium)
+                Text(
+                    text = if (isLoading) "Signing in..." else "Sign In",
+                    color = Color.White,
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.Medium
+                )
             }
         }
 

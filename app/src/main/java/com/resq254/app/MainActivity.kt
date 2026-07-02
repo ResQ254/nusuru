@@ -18,6 +18,7 @@ import com.resq254.app.ui.onboarding.OnboardingScreen
 import com.resq254.app.ui.splash.SplashScreen
 import com.resq254.app.ui.theme.NusuruTheme
 
+
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
