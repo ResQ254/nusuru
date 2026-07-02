@@ -40,9 +40,10 @@ fun CallingScreen(label: String, number: String, onEnd: () -> Unit) {
     // Performance Fix: Replaced mutableStateOf(0) with primitive-backed state tracker
     var secs by remember { mutableIntStateOf(0) }
 
-    // Trigger the real system dialer cleanly
+    // Trigger the system dialer pre-filled with the number.
+    // ACTION_DIAL needs no runtime permission and never crashes, unlike ACTION_CALL.
     LaunchedEffect(Unit) {
-        val intent = Intent(Intent.ACTION_CALL, Uri.parse("tel:$number"))
+        val intent = Intent(Intent.ACTION_DIAL, Uri.parse("tel:$number"))
         context.startActivity(intent)
         // Optimization Fix: Upgraded legacy Long overloads to explicit Durations
         delay(2200.milliseconds)

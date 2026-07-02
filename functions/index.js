@@ -5,41 +5,49 @@ admin.initializeApp();
 
 const db = admin.firestore();
 
+/** Reads is-active regardless of hyphen/underscore naming. */
+function isActive(data) {
+  return data["is-active"] === true || data.is_active === true;
+}
+
+/** Reads radius-km regardless of hyphen/underscore naming. */
+function getRadiusKm(data) {
+  const r = data["radius-km"] ?? data.radius_km;
+  return typeof r === "number" ? r : 5;
+}
+
+function hasValidLocation(loc) {
+  return loc && loc.latitude !== undefined && loc.longitude !== undefined;
+}
+
 exports.onIncidentCreated = onDocumentCreated(
   "incidents/{incidentId}",
   async (event) => {
-
     const incident = event.data.data();
     const incidentId = event.params.incidentId;
     const incidentLocation = incident.location;
 
     console.log("🚨 Incident created:", incidentId);
 
-    const providersSnapshot = await db.collection("service_providers")
-      .where("is_active", "==", true)
-      .get();
+    if (!hasValidLocation(incidentLocation)) {
+      console.error(`Incident ${incidentId} has no valid location, skipping fan-out.`);
+      return;
+    }
+
+    const providersSnapshot = await db.collection("service-providers").get();
 
     const alerts = [];
 
     providersSnapshot.forEach((doc) => {
-
       const provider = doc.data();
 
-      // ✅ CRITICAL FIX (you needed this)
-      if (
-        !provider.location ||
-        provider.location.latitude === undefined ||
-        provider.location.longitude === undefined
-      ) {
-        return;
-      }
+      if (!isActive(provider)) return;
 
-      const distance = calculateDistance(
-        incidentLocation,
-        provider.location
-      );
+      const providerLocation = provider.location;
+      if (!hasValidLocation(providerLocation)) return;
 
-      const radius = provider.radius_km || 5;
+      const distance = calculateDistance(incidentLocation, providerLocation);
+      const radius = getRadiusKm(provider);
 
       if (distance <= radius) {
         alerts.push({
@@ -51,6 +59,11 @@ exports.onIncidentCreated = onDocumentCreated(
         });
       }
     });
+
+    if (alerts.length === 0) {
+      console.log("No providers in range, no alerts created.");
+      return;
+    }
 
     const batch = db.batch();
 

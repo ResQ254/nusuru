@@ -32,7 +32,7 @@ private val mockAlerts = listOf(
 )
 
 @Composable
-fun SPHomeScreen() {
+fun SPHomeScreen(onLogout: () -> Unit = {}) {
     var isAvailable by remember { mutableStateOf(true) }
 
     Column(
@@ -52,17 +52,26 @@ fun SPHomeScreen() {
                 Text("Nairobi Central", color = TextSecondary, fontSize = 11.sp)
                 Text("Responder dashboard", color = TextPrimary, fontSize = 15.sp, fontWeight = FontWeight.Medium)
             }
-            Box(
-                modifier = Modifier
-                    .clip(RoundedCornerShape(6.dp))
-                    .background(if (isAvailable) Color(0xFFE8F5E9) else Color(0xFFFCEBEB))
-                    .padding(horizontal = 8.dp, vertical = 4.dp)
-            ) {
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                Box(
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(6.dp))
+                        .background(if (isAvailable) Color(0xFFE8F5E9) else Color(0xFFFCEBEB))
+                        .padding(horizontal = 8.dp, vertical = 4.dp)
+                ) {
+                    Text(
+                        if (isAvailable) "ON DUTY" else "OFF DUTY",
+                        color = if (isAvailable) Color(0xFF27AE60) else AccentRed,
+                        fontSize = 9.sp,
+                        fontWeight = FontWeight.Medium
+                    )
+                }
                 Text(
-                    if (isAvailable) "ON DUTY" else "OFF DUTY",
-                    color = if (isAvailable) Color(0xFF27AE60) else AccentRed,
-                    fontSize = 9.sp,
-                    fontWeight = FontWeight.Medium
+                    "Log out",
+                    color = AccentRed,
+                    fontSize = 11.sp,
+                    fontWeight = FontWeight.Medium,
+                    modifier = Modifier.clickable { onLogout() }
                 )
             }
         }

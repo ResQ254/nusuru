@@ -3,8 +3,6 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // ─── Helper functions ───────────────────────────────────────────────
-
     function isAuth() {
       return request.auth != null;
     }
@@ -23,7 +21,6 @@ service cloud.firestore {
         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.is_guardian == true;
     }
 
-    // ─── USERS collection ───────────────────────────────────────────────
     match /users/{uid} {
       allow read: if isOwner(uid) || isAdmin();
       allow create: if isOwner(uid) && isAuth();
@@ -32,7 +29,6 @@ service cloud.firestore {
       allow delete: if isAdmin();
     }
 
-    // ─── INCIDENTS collection ────────────────────────────────────────────
     match /incidents/{incidentId} {
       allow read: if isAuth();
       allow create: if isAuth() &&
@@ -45,37 +41,26 @@ service cloud.firestore {
       allow delete: if isAdmin();
     }
 
-    // ─── ALERTS collection ───────────────────────────────────────────────
     match /alerts/{alertId} {
       allow read: if isAuth() && (
                      resource.data.recipient_uid == request.auth.uid ||
                      isAdmin()
                   );
-      // Alerts are created by the onIncidentCreated Cloud Function via the
-      // Admin SDK, which bypasses these rules entirely — this just blocks
-      // any direct client-side write attempt.
       allow create: if isAdmin();
       allow update: if isAuth() &&
                        resource.data.recipient_uid == request.auth.uid;
       allow delete: if isAdmin();
     }
 
-    // ─── EMERGENCY-CONTACTS collection ───────────────────────────────────
     match /emergency-contacts/{contactId} {
       allow read: if isAuth();
       allow write: if isAdmin();
     }
 
-    // ─── SERVICE-PROVIDERS collection ────────────────────────────────────
     match /service-providers/{providerId} {
       allow read: if isAuth();
-
-      // Providers self-register — must write to their own uid-keyed doc
       allow create: if isAuth() && isOwner(providerId);
-
-      // Providers update their own status/location; admins can also manage
       allow update: if isAuth() && (isOwner(providerId) || isAdmin());
-
       allow delete: if isAdmin();
     }
 

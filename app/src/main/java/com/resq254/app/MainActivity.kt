@@ -1,16 +1,25 @@
 package com.resq254.app
 
+import android.Manifest
 import android.os.Bundle
 import androidx.activity.ComponentActivity
+import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import com.resq254.app.data.AuthManager
+import com.resq254.app.data.LocationProvider
+import com.resq254.app.ui.EmergencyViewModel
+import com.resq254.app.ui.FeedViewModel
 import com.resq254.app.ui.auth.*
 import com.resq254.app.ui.onboarding.OnboardingScreen
 import com.resq254.app.ui.provider.SPHomeScreen
@@ -67,7 +76,12 @@ private fun AppRoot() {
 
         composable("login") {
             LoginScreen(
-                onLoginSuccess = { navController.navigate("user_home") },
+                onLoginSuccess = { role ->
+                    val destination = if (role == "service_provider") "sp_home" else "user_home"
+                    navController.navigate(destination) {
+                        popUpTo("login") { inclusive = true }
+                    }
+                },
                 onGoogleLoginClick = { },
                 onForgotPasswordClicked = { navController.navigate("forgot_password") },
                 onNavigateToSignUpOptions = { navController.navigate("auth_options") }
@@ -103,19 +117,15 @@ private fun AppRoot() {
             var feedSearch by remember { mutableStateOf("") }
             var feedFilter by remember { mutableStateOf("all") }
 
-            val mockAlerts = listOf(
-                EmergencyAlert("Structure Fire", "Tom Mboya St", 12),
-                EmergencyAlert("Medical Emergency", "Kenyatta Ave", 4)
-            )
+            val feedViewModel: FeedViewModel = viewModel()
+            val incidents by feedViewModel.incidents.collectAsState()
+            val liveAlerts = feedViewModel.asAlerts(incidents)
 
-            val mockFeedAlerts = listOf(
-                ResqAlert("1", "Structure Fire", "fire", "active", "Tom Mboya St", 12, System.currentTimeMillis() - 180000),
-                ResqAlert("2", "Medical Emergency", "medical", "responding", "Kenyatta Ave", 4, System.currentTimeMillis() - 420000),
-                ResqAlert("3", "Robbery Reported", "security", "pending", "Moi Avenue", 6, System.currentTimeMillis() - 840000)
-            )
+            // Home "active near you" summary derived from the live feed (top items).
+            val homeAlerts = liveAlerts.take(3).map { EmergencyAlert(it.title, it.location, it.responders) }
 
             val filteredAlerts: () -> List<ResqAlert> = {
-                mockFeedAlerts.filter { alert ->
+                liveAlerts.filter { alert ->
                     (feedFilter == "all" || alert.type == feedFilter) &&
                             (feedSearch.isEmpty() || alert.title.contains(feedSearch, ignoreCase = true))
                 }
@@ -128,8 +138,8 @@ private fun AppRoot() {
                 onAlertTap = { navController.navigate("feed") },
                 onBellTap = { navController.navigate("notifications") },
                 onAlertCardTap = { id -> navController.navigate("alert_detail/$id") },
-                mockAlerts = mockAlerts,
-                mockFeedAlerts = mockFeedAlerts,
+                mockAlerts = homeAlerts,
+                mockFeedAlerts = liveAlerts,
                 filteredAlerts = filteredAlerts,
                 feedSearch = feedSearch,
                 feedFilter = feedFilter,
@@ -141,9 +151,24 @@ private fun AppRoot() {
         }
 
         composable("broadcast") {
-            val state = UiState()
+            val context = LocalContext.current
+            val emergencyViewModel: EmergencyViewModel = viewModel()
+
+            // Request location, then start the real broadcast (create incident + fan-out alerts).
+            val permissionLauncher = rememberLauncherForActivityResult(
+                ActivityResultContracts.RequestPermission()
+            ) { emergencyViewModel.startBroadcast(context) }
+
+            LaunchedEffect(Unit) {
+                if (LocationProvider.hasPermission(context)) {
+                    emergencyViewModel.startBroadcast(context)
+                } else {
+                    permissionLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION)
+                }
+            }
+
             BroadcastScreen(
-                state = state,
+                state = emergencyViewModel.uiState,
                 formatTime = { s -> "%02d:%02d".format(s / 60, s % 60) },
                 onCancel = { navController.popBackStack() }
             )
@@ -198,16 +223,13 @@ private fun AppRoot() {
         composable("feed") {
             var feedSearch by remember { mutableStateOf("") }
             var feedFilter by remember { mutableStateOf("all") }
-            val mockAlerts = listOf(
-                ResqAlert("1", "Structure Fire", "fire", "active", "Tom Mboya St", 12, System.currentTimeMillis() - 180000),
-                ResqAlert("2", "Medical Emergency", "medical", "responding", "Kenyatta Ave", 4, System.currentTimeMillis() - 420000),
-                ResqAlert("3", "Robbery Reported", "security", "pending", "Moi Avenue", 6, System.currentTimeMillis() - 840000),
-                ResqAlert("4", "Road Accident", "medical", "resolved", "Uhuru Highway", 18, System.currentTimeMillis() - 1320000)
-            )
+            val feedViewModel: FeedViewModel = viewModel()
+            val incidents by feedViewModel.incidents.collectAsState()
+            val liveAlerts = feedViewModel.asAlerts(incidents)
             FeedScreen(
                 state = ResqFeedUiState(feedSearch = feedSearch, feedFilter = feedFilter),
                 filteredAlerts = {
-                    mockAlerts.filter { alert ->
+                    liveAlerts.filter { alert ->
                         (feedFilter == "all" || alert.type == feedFilter) &&
                                 (feedSearch.isEmpty() || alert.title.contains(feedSearch, ignoreCase = true))
                     }
@@ -221,18 +243,20 @@ private fun AppRoot() {
         composable("alert_detail/{id}") { backStackEntry ->
             val id = backStackEntry.arguments?.getString("id") ?: ""
             var isResponding by remember { mutableStateOf(false) }
-            val mockAlert = Alert(
+            val feedViewModel: FeedViewModel = viewModel()
+            val incidents by feedViewModel.incidents.collectAsState()
+            val alert = feedViewModel.findAlert(incidents, id) ?: Alert(
                 id = id,
-                title = "Structure Fire",
-                type = "fire",
+                title = "Loading incident...",
+                type = "other",
                 status = "active",
-                location = "Tom Mboya St, CBD",
-                description = "A fire has broken out on the third floor of a commercial building. Thick smoke visible from street level. Building is being evacuated.",
-                timestampMs = System.currentTimeMillis() - 180000,
-                responders = 12
+                location = "Fetching location",
+                description = "Loading incident details from the server.",
+                timestampMs = System.currentTimeMillis(),
+                responders = 0
             )
             AlertDetailScreen(
-                alert = mockAlert,
+                alert = alert,
                 isResponding = isResponding,
                 onToggleResponding = { isResponding = !isResponding },
                 onCall = { label, number -> navController.navigate("calling/$label/$number") },
@@ -241,7 +265,14 @@ private fun AppRoot() {
         }
 
         composable("sp_home") {
-            SPHomeScreen()
+            SPHomeScreen(
+                onLogout = {
+                    AuthManager.logout()
+                    navController.navigate("login") {
+                        popUpTo(0) { inclusive = true }
+                    }
+                }
+            )
         }
     }
 }

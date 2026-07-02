@@ -43,14 +43,29 @@ object AuthManager {
             }
     }
 
+    /**
+     * Signs the user in and then reads their stored `role` from Firestore so callers can
+     * route service providers and residents to the correct home screen.
+     *
+     * @param onSuccess invoked with the user's role ("service_provider", "user", or null if unknown).
+     */
     fun login(
         email: String,
         password: String,
-        onSuccess: () -> Unit,
+        onSuccess: (role: String?) -> Unit,
         onError: (String) -> Unit
     ) {
         auth.signInWithEmailAndPassword(email, password)
-            .addOnSuccessListener { onSuccess() }
+            .addOnSuccessListener {
+                val uid = auth.currentUser?.uid
+                if (uid == null) {
+                    onSuccess(null)
+                    return@addOnSuccessListener
+                }
+                db.collection("users").document(uid).get()
+                    .addOnSuccessListener { doc -> onSuccess(doc.getString("role")) }
+                    .addOnFailureListener { onSuccess(null) } // signed in; just no role info
+            }
             .addOnFailureListener { e ->
                 onError(e.message ?: "Login failed")
             }

@@ -54,6 +54,12 @@ dependencies {
     implementation(platform("com.google.firebase:firebase-bom:32.0.0"))
     implementation("com.google.firebase:firebase-firestore")
     implementation("com.google.firebase:firebase-auth")
+    // Real device location for proximity-based responder matching
+    implementation("com.google.android.gms:play-services-location:21.3.0")
+    // Bridges Play Services Task<T> to Kotlin coroutines (await())
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.8.1")
+    // ViewModel support for Compose (viewModel() + lifecycle-aware state)
+    implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.8.7")
 
     testImplementation(libs.junit)
     androidTestImplementation(platform(libs.androidx.compose.bom))
