@@ -1,9 +1,7 @@
 package com.resq254.app.ui.user
 
 import androidx.compose.animation.core.*
-import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -14,14 +12,10 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.scale
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -29,22 +23,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.resq254.app.ui.theme.*
 import java.util.Calendar
-
-data class EmergencyAlert(
-    val title: String,
-    val location: String,
-    val responders: Int
-)
-
-data class NotificationItem(
-    val id: String,
-    val read: Boolean
-)
-
-data class HomeUiState(
-    val notifications: List<NotificationItem> = emptyList(),
-    val alerts: List<EmergencyAlert> = emptyList()
-)
 
 @Composable
 fun HomeScreen(
@@ -56,337 +34,134 @@ fun HomeScreen(
     onAlertTap: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val greeting = when (Calendar.getInstance().get(Calendar.HOUR_OF_DAY)) {
-        in 0..11 -> "GOOD MORNING"
-        in 12..16 -> "GOOD AFTERNOON"
-        else -> "GOOD EVENING"
-    }
-    val unread = state.notifications.count { !it.read }
+    val hour = Calendar.getInstance().get(Calendar.HOUR_OF_DAY)
+    val greeting = if (hour < 12) "Good Morning" else if (hour < 17) "Good Afternoon" else "Good Evening"
 
     Column(
         modifier = modifier
             .fillMaxSize()
-            .background(SurfaceWhite)
+            .background(DarkBg)
             .verticalScroll(rememberScrollState())
+            .padding(16.dp)
     ) {
         Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 24.dp, vertical = 20.dp),
+            modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
             Column {
-                Text(
-                    greeting,
-                    color = TextSub,
-                    fontSize = 10.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    letterSpacing = 1.2.sp
-                )
-                Text(
-                    "Amara Kariuki",
-                    color = TextPrimary,
-                    fontSize = 22.sp,
-                    fontWeight = FontWeight.Bold,
-                    letterSpacing = (-0.3).sp
-                )
+                Text(greeting, color = TextGrey, fontSize = 12.sp)
+                Text("Amara Kariuki", color = TextLight, fontSize = 20.sp, fontWeight = FontWeight.Bold)
             }
             Box {
-                Box(
-                    modifier = Modifier
-                        .size(40.dp)
-                        .clip(CircleShape)
-                        .background(AppCardLight)
-                        .border(1.dp, BorderColor, CircleShape)
-                        .clickable { onBellTap() },
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(
-                        Icons.Default.Notifications,
-                        null,
-                        tint = TextPrimary,
-                        modifier = Modifier.size(18.dp)
-                    )
+                IconButton(onClick = onBellTap) {
+                    Icon(Icons.Default.Notifications, "Notifications", tint = TextLight)
                 }
-                if (unread > 0) {
-                    Box(
-                        modifier = Modifier
-                            .size(10.dp)
-                            .clip(CircleShape)
-                            .background(AccentRed)
-                            .align(Alignment.TopEnd)
-                    )
+                if (state.unreadCount > 0) {
+                    Box(modifier = Modifier.size(8.dp).clip(CircleShape).background(RedSOS).align(Alignment.TopEnd))
                 }
             }
         }
 
-        Row(
-            modifier = Modifier.padding(horizontal = 24.dp),
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
+        Spacer(modifier = Modifier.height(10.dp))
+
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             Row(
-                modifier = Modifier
-                    .clip(RoundedCornerShape(20.dp))
-                    .background(AppCardLight)
-                    .border(1.dp, BorderColor, RoundedCornerShape(20.dp))
-                    .padding(horizontal = 12.dp, vertical = 6.dp),
+                modifier = Modifier.clip(RoundedCornerShape(20.dp)).background(DarkSurface).padding(horizontal = 10.dp, vertical = 5.dp),
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(6.dp)
+                horizontalArrangement = Arrangement.spacedBy(4.dp)
             ) {
-                Box(
-                    Modifier
-                        .size(6.dp)
-                        .clip(CircleShape)
-                        .background(SafeGreen)
-                )
-                Icon(
-                    Icons.Default.LocationOn,
-                    null,
-                    tint = TextPrimary,
-                    modifier = Modifier.size(11.dp)
-                )
-                Text(
-                    "Westlands, Nairobi",
-                    color = TextPrimary,
-                    fontSize = 12.sp,
-                    fontWeight = FontWeight.Medium
-                )
+                Icon(Icons.Default.LocationOn, null, tint = AccentGreen, modifier = Modifier.size(13.dp))
+                Text("Westlands, Nairobi", color = TextLight, fontSize = 12.sp)
             }
             Row(
-                modifier = Modifier
-                    .clip(RoundedCornerShape(20.dp))
-                    .background(SafeGreen.copy(0.08f))
-                    .border(1.dp, SafeGreen.copy(0.22f), RoundedCornerShape(20.dp))
-                    .padding(horizontal = 12.dp, vertical = 6.dp),
+                modifier = Modifier.clip(RoundedCornerShape(20.dp)).background(GreenSafe.copy(alpha = 0.15f)).padding(horizontal = 10.dp, vertical = 5.dp),
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(6.dp)
+                horizontalArrangement = Arrangement.spacedBy(4.dp)
             ) {
-                Icon(
-                    Icons.Default.Wifi,
-                    null,
-                    tint = SafeGreen,
-                    modifier = Modifier.size(11.dp)
-                )
-                Text(
-                    "2,847 nearby",
-                    color = SafeGreen,
-                    fontSize = 12.sp,
-                    fontWeight = FontWeight.Medium
-                )
+                Icon(Icons.Default.Wifi, null, tint = AccentGreen, modifier = Modifier.size(13.dp))
+                Text("2,847 nearby", color = AccentGreen, fontSize = 12.sp)
             }
         }
 
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(24.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            Text(
-                "EMERGENCY BROADCAST",
-                color = TextSub,
-                fontSize = 10.sp,
-                fontWeight = FontWeight.SemiBold,
-                letterSpacing = 1.5.sp
-            )
-            Spacer(Modifier.height(28.dp))
-            SosButton(onClick = onSOSTap)
-            Spacer(Modifier.height(20.dp))
-            Text(
-                "Instantly alerts nearby bystanders\nand emergency services",
-                color = TextSub,
-                fontSize = 12.sp,
-                textAlign = TextAlign.Center,
-                lineHeight = 18.sp
-            )
+        Spacer(modifier = Modifier.height(28.dp))
+
+        Text("EMERGENCY BROADCAST", color = TextGrey, fontSize = 11.sp, fontWeight = FontWeight.SemiBold, letterSpacing = 1.sp, modifier = Modifier.fillMaxWidth(), textAlign = TextAlign.Center)
+        Spacer(modifier = Modifier.height(20.dp))
+
+        Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+            SOSButton(onClick = onSOSTap)
         }
 
-        Column(modifier = Modifier.padding(horizontal = 24.dp)) {
-            Text(
-                "QUICK CALL",
-                color = TextSub,
-                fontSize = 10.sp,
-                fontWeight = FontWeight.SemiBold,
-                letterSpacing = 1.sp
-            )
-            Spacer(Modifier.height(10.dp))
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                QuickCallTile(
-                    "Police",
-                    Icons.Default.Security,
-                    Color(0xFF6A5ACD),
-                    { onQuickCall("Police", "999") },
-                    Modifier.weight(1f)
-                )
-                QuickCallTile(
-                    "Ambulance",
-                    Icons.Default.Favorite,
-                    AccentRed,
-                    { onQuickCall("Ambulance", "0800 720 999") },
-                    Modifier.weight(1f)
-                )
-                QuickCallTile(
-                    "Fire",
-                    Icons.Default.LocalFireDepartment,
-                    Color(0xFFFF9800),
-                    { onQuickCall("Fire", "999") },
-                    Modifier.weight(1f)
-                )
-                QuickCallTile(
-                    "Hospital",
-                    Icons.Default.LocalHospital,
-                    SafeGreen,
-                    onHospitalTap,
-                    Modifier.weight(1f)
-                )
-            }
+        Spacer(modifier = Modifier.height(16.dp))
+        Text("Tap to alert nearby bystanders and emergency services", color = TextGrey, fontSize = 12.sp, textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth())
+        Spacer(modifier = Modifier.height(28.dp))
+
+        Text("QUICK CALL", color = TextGrey, fontSize = 11.sp, fontWeight = FontWeight.SemiBold, letterSpacing = 1.sp)
+        Spacer(modifier = Modifier.height(10.dp))
+
+        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            QuickCallButton("Police",    Icons.Default.Security,            PurplePolice, { onQuickCall("Police",    "999") },          Modifier.weight(1f))
+            QuickCallButton("Ambulance", Icons.Default.Favorite,            RedSOS,       { onQuickCall("Ambulance", "0800 720 999") }, Modifier.weight(1f))
+            QuickCallButton("Fire",      Icons.Default.LocalFireDepartment, OrangeAlert,  { onQuickCall("Fire",      "999") },          Modifier.weight(1f))
+            QuickCallButton("Hospital",  Icons.Default.LocalHospital,       GreenSafe,    onHospitalTap,                                Modifier.weight(1f))
         }
 
-        Spacer(Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(20.dp))
 
-        val topAlert = state.alerts.firstOrNull()
-        if (topAlert != null) {
-            val blinkAlpha by rememberInfiniteTransition(label = "blink").animateFloat(
-                initialValue = 1f,
-                targetValue = 0.1f,
-                animationSpec = infiniteRepeatable(tween(800), RepeatMode.Reverse),
-                label = "a"
+        val latest = state.alerts.firstOrNull()
+        if (latest != null) {
+            val blink by rememberInfiniteTransition(label = "blink").animateFloat(
+                1f, 0.2f, infiniteRepeatable(tween(700), RepeatMode.Reverse), label = "b"
             )
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 24.dp)
-                    .clip(RoundedCornerShape(14.dp))
-                    .background(
-                        Brush.horizontalGradient(
-                            listOf(AccentRed.copy(0.07f), Color.Transparent)
-                        )
-                    )
-                    .border(1.dp, AccentRed.copy(0.18f), RoundedCornerShape(14.dp))
-                    .clickable { onAlertTap() }
-                    .padding(13.dp)
+            Card(
+                modifier = Modifier.fillMaxWidth().clickable { onAlertTap() },
+                colors   = CardDefaults.cardColors(containerColor = DarkSurface),
+                shape    = RoundedCornerShape(10.dp)
             ) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    Box(
-                        Modifier
-                            .size(7.dp)
-                            .clip(CircleShape)
-                            .background(AccentRed.copy(alpha = blinkAlpha))
-                    )
+                Row(modifier = Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                    Box(modifier = Modifier.size(8.dp).clip(CircleShape).background(RedSOS.copy(alpha = blink)))
                     Column(modifier = Modifier.weight(1f)) {
-                        Text(
-                            "${topAlert.title} · ${topAlert.location}",
-                            color = TextPrimary,
-                            fontSize = 13.sp,
-                            fontWeight = FontWeight.SemiBold
-                        )
-                        Text(
-                            "${topAlert.responders} responding",
-                            color = TextSub,
-                            fontSize = 11.sp
-                        )
+                        Text("${latest.title} - ${latest.location}", color = TextLight, fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
+                        Text("${latest.responders} responding", color = TextGrey, fontSize = 11.sp)
                     }
-                    Icon(
-                        Icons.Default.ChevronRight,
-                        null,
-                        tint = TextSub,
-                        modifier = Modifier.size(16.dp)
-                    )
+                    Icon(Icons.Default.ChevronRight, null, tint = TextGrey)
                 }
             }
         }
 
-        Spacer(Modifier.height(28.dp))
+        Spacer(modifier = Modifier.height(16.dp))
     }
 }
 
 @Composable
-fun SosButton(onClick: () -> Unit) {
-    val progress by rememberInfiniteTransition(label = "sos").animateFloat(
-        initialValue = 0f,
-        targetValue = 1f,
-        animationSpec = infiniteRepeatable(
-            tween(2150, easing = LinearEasing),
-            RepeatMode.Restart
-        ),
-        label = "p"
+fun SOSButton(onClick: () -> Unit) {
+    val pulse by rememberInfiniteTransition(label = "sos").animateFloat(
+        0.85f, 1.3f, infiniteRepeatable(tween(1200), RepeatMode.Reverse), label = "p"
     )
-    var pressed by remember { mutableStateOf(false) }
-    val scale by animateFloatAsState(if (pressed) 0.94f else 1f, label = "s")
-
-    Box(Modifier.size(188.dp), contentAlignment = Alignment.Center) {
-        Canvas(Modifier.fillMaxSize()) {
-            val c = this.center
-            val r = size.minDimension / 2f
-            for (i in 0..2) {
-                val ph = (progress + i / 3f) % 1f
-                drawCircle(
-                    color = Color(0xFFE01B2F).copy(0.45f * (1f - ph)),
-                    radius = r * (0.85f + 1.75f * ph),
-                    center = c,
-                    style = Stroke(1.5.dp.toPx())
-                )
-            }
-        }
-        Box(
-            modifier = Modifier
-                .size(158.dp)
-                .scale(scale)
-                .clip(CircleShape)
-                .background(
-                    Brush.radialGradient(
-                        listOf(Color(0xFFF42640), Color(0xFFAA1320))
-                    )
-                )
-                .clickable {
-                    pressed = false
-                    onClick()
-                },
-            contentAlignment = Alignment.Center
+    Box(modifier = Modifier.size(160.dp), contentAlignment = Alignment.Center) {
+        Box(modifier = Modifier.size((140 * pulse).dp).clip(CircleShape).background(RedSOS.copy(alpha = 0.18f)))
+        Box(modifier = Modifier.size((110 * pulse).dp).clip(CircleShape).background(RedSOS.copy(alpha = 0.12f)))
+        Button(
+            onClick = onClick,
+            modifier = Modifier.size(100.dp),
+            shape    = CircleShape,
+            colors   = ButtonDefaults.buttonColors(containerColor = RedSOS),
+            elevation= ButtonDefaults.buttonElevation(8.dp)
         ) {
-            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                Text(
-                    "SOS",
-                    color = Color.White,
-                    fontSize = 40.sp,
-                    fontWeight = FontWeight.Bold,
-                    letterSpacing = (-1).sp
-                )
-                Text(
-                    "TAP TO BROADCAST",
-                    color = Color.White.copy(0.55f),
-                    fontSize = 9.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    letterSpacing = 1.2.sp
-                )
-            }
+            Text("SOS", color = Color.White, fontSize = 22.sp, fontWeight = FontWeight.Bold)
         }
     }
 }
 
 @Composable
-fun QuickCallTile(
-    label: String,
-    icon: ImageVector,
-    color: Color,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier
-) {
+fun QuickCallButton(label: String, icon: ImageVector, color: Color, onClick: () -> Unit, modifier: Modifier = Modifier) {
     Column(
-        modifier = modifier
-            .clip(RoundedCornerShape(14.dp))
-            .background(AppCardLight)
-            .border(1.dp, BorderColor, RoundedCornerShape(14.dp))
-            .clickable { onClick() }
-            .padding(vertical = 12.dp),
+        modifier = modifier.clip(RoundedCornerShape(10.dp)).background(DarkSurface).clickable { onClick() }.padding(8.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(6.dp)
+        verticalArrangement = Arrangement.spacedBy(4.dp)
     ) {
-        Icon(icon, label, tint = color, modifier = Modifier.size(17.dp))
-        Text(label, color = TextSub, fontSize = 10.sp, fontWeight = FontWeight.Medium)
+        Icon(icon, label, tint = color, modifier = Modifier.size(18.dp))
+        Text(label, color = TextGrey, fontSize = 10.sp, textAlign = TextAlign.Center)
     }
 }

@@ -7,7 +7,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import com.resq254.app.data.EmergencyRepository
 
 @Composable
 fun EmergencyScreen() {

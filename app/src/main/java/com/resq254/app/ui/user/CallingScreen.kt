@@ -4,8 +4,6 @@ import android.content.Intent
 import android.net.Uri
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -14,129 +12,118 @@ import androidx.compose.material.icons.filled.Call
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.draw.scale
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.resq254.app.ui.theme.*
 import kotlinx.coroutines.delay
-import kotlin.time.Duration.Companion.milliseconds
-import kotlin.time.Duration.Companion.seconds
 
 @Composable
 fun CallingScreen(label: String, number: String, onEnd: () -> Unit) {
     val context = LocalContext.current
     var connected by remember { mutableStateOf(false) }
+    var seconds   by remember { mutableStateOf(0) }
 
-    // Performance Fix: Replaced mutableStateOf(0) with primitive-backed state tracker
-    var secs by remember { mutableIntStateOf(0) }
-
-    // Trigger the real system dialer cleanly
     LaunchedEffect(Unit) {
         val intent = Intent(Intent.ACTION_CALL, Uri.parse("tel:$number"))
         context.startActivity(intent)
-        // Optimization Fix: Upgraded legacy Long overloads to explicit Durations
-        delay(2200.milliseconds)
+        delay(2000)
         connected = true
     }
-
     LaunchedEffect(connected) {
         if (!connected) return@LaunchedEffect
-        while (true) {
-            delay(1.seconds)
-            secs++
-        }
+        while (true) { delay(1000); seconds++ }
     }
 
-    val ringProgress by rememberInfiniteTransition(label = "ring").animateFloat(
-        initialValue = 0f,
-        targetValue = 1f,
-        animationSpec = infiniteRepeatable(tween(1800, easing = LinearEasing), RepeatMode.Restart),
-        label = "rp"
-    )
-
-    val pulseScale by rememberInfiniteTransition(label = "pulse").animateFloat(
+    val infiniteTransition = rememberInfiniteTransition(label = "")
+    val pulseState = infiniteTransition.animateFloat(
         initialValue = 1f,
-        targetValue = 1.08f,
-        animationSpec = infiniteRepeatable(tween(1000), RepeatMode.Reverse),
-        label = "ps"
+        targetValue = 1.15f,
+        animationSpec = infiniteRepeatable(tween(900), RepeatMode.Reverse),
+        label = ""
     )
+    val pulse = pulseState.value // Extracted explicitly to prevent animation state compiler warnings
 
-    // Cleaned mapping to your design tokens: SurfaceWhite, AccentRed, TextPrimary, etc.
+    // DYNAMIC LIGHT/DARK ADAPTATION VIA MATERIALTHEME TOKENS
+    val currentBg = MaterialTheme.colorScheme.background
+    val currentText = MaterialTheme.colorScheme.onBackground
+
     Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(SurfaceWhite)
-            .padding(horizontal = 24.dp)
-            .padding(top = 40.dp, bottom = 52.dp),
+        modifier = Modifier.fillMaxSize().background(currentBg).padding(24.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Text(if (connected) "CONNECTED" else "CALLING...", color = TextSub, fontSize = 12.sp, letterSpacing = 1.sp)
-        Spacer(Modifier.weight(1f))
+        Spacer(modifier = Modifier.weight(1f))
 
-        Box(Modifier.size(140.dp), contentAlignment = Alignment.Center) {
-            if (!connected) androidx.compose.foundation.Canvas(Modifier.fillMaxSize()) {
-                val c = this.center
-                val r = size.minDimension / 2f
-                for (i in 0..2) {
-                    val ph = (ringProgress + i / 3f) % 1f
-                    // Type Safety Fix: Now passes the unwrapped float modifier color safely
-                    drawCircle(AccentRed.copy(0.5f * (1f - ph)), r * (1f + ph * 1.2f), c, style = Stroke(1.5.dp.toPx()))
-                }
-            }
-            Box(
-                modifier = Modifier
-                    .size(if (connected) 120.dp else 104.dp)
-                    .scale(if (connected) pulseScale else 1f)
-                    .clip(CircleShape)
-                    .background(Brush.linearGradient(listOf(AccentRed.copy(0.13f), AccentRed.copy(0.27f))))
-                    .border(1.5.dp, AccentRed.copy(0.33f), CircleShape),
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(Icons.Default.Call, null, tint = AccentRed, modifier = Modifier.size(36.dp))
-            }
+        Text(
+            if (connected) "CONNECTED" else "CALLING...",
+            color = TextSecondary,
+            fontSize = 12.sp,
+            letterSpacing = 1.sp
+        )
+
+        Spacer(modifier = Modifier.height(32.dp))
+
+        Box(
+            modifier = Modifier
+                .size((if (connected) 120 else 100).dp)
+                .scale(if (!connected) pulse else 1f)
+                .clip(CircleShape)
+                .background(AccentRed.copy(alpha = 0.15f)),
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(Icons.Default.Call, null, tint = AccentRed, modifier = Modifier.size(44.dp))
         }
 
-        Spacer(Modifier.height(20.dp))
-        Text(label, color = TextPrimary, fontSize = 26.sp, fontWeight = FontWeight.Bold, letterSpacing = (-0.3).sp)
-        Spacer(Modifier.height(4.dp))
-        Text(if (connected) "%02d:%02d".format(secs / 60, secs % 60) else number, color = TextSub, fontSize = 18.sp)
+        Spacer(modifier = Modifier.height(24.dp))
+
+        Text(label, color = currentText, fontSize = 24.sp, fontWeight = FontWeight.Bold)
+
+        Spacer(modifier = Modifier.height(4.dp))
+
+        Text(
+            if (connected) "%02d:%02d".format(seconds / 60, seconds % 60) else number,
+            color = TextSecondary,
+            fontSize = 16.sp
+        )
 
         if (connected) {
-            Spacer(Modifier.height(10.dp))
+            Spacer(modifier = Modifier.height(12.dp))
             Row(
                 modifier = Modifier
                     .clip(RoundedCornerShape(20.dp))
-                    .background(SafeGreen.copy(0.10f))
-                    .border(1.dp, SafeGreen.copy(0.25f), RoundedCornerShape(20.dp))
-                    .padding(horizontal = 14.dp, vertical = 5.dp),
-                horizontalArrangement = Arrangement.spacedBy(6.dp),
-                verticalAlignment = Alignment.CenterVertically
+                    .background(SafeGreen.copy(alpha = 0.15f))
+                    .padding(horizontal = 14.dp, vertical = 6.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(6.dp)
             ) {
-                Icon(Icons.Default.Check, null, tint = SafeGreen, modifier = Modifier.size(12.dp))
-                Text("Call connected", color = SafeGreen, fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
+                Icon(Icons.Default.Check, null, tint = SafeGreen, modifier = Modifier.size(14.dp))
+                Text("Connected", color = SafeGreen, fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
             }
         }
 
-        Spacer(Modifier.weight(1f))
-        Box(
-            modifier = Modifier
-                .size(70.dp)
-                .clip(CircleShape)
-                .background(Brush.radialGradient(listOf(Color(0xFFF42640), Color(0xFFAA1320))))
-                .clickable { onEnd() },
-            contentAlignment = Alignment.Center
+        Spacer(modifier = Modifier.weight(1f))
+
+        Button(
+            onClick = onEnd,
+            modifier = Modifier.size(65.dp),
+            shape = CircleShape,
+            colors = ButtonDefaults.buttonColors(containerColor = AccentRed)
         ) {
-            Icon(Icons.Default.Call, "End call", tint = Color.White, modifier = Modifier.size(26.dp).rotate(135f))
+            Icon(
+                Icons.Default.Call,
+                "End",
+                tint = Color.White,
+                modifier = Modifier.size(24.dp).rotate(135f)
+            )
         }
+
+        Spacer(modifier = Modifier.height(16.dp))
     }
 }
