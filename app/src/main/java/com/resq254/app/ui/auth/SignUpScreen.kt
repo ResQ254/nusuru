@@ -20,9 +20,11 @@ import com.resq254.app.ui.theme.*
 @Composable
 fun SignUpScreen(
     role: String?,
-    onSignUpSuccess: () -> Unit,
+    onSignUp: (name: String, email: String, phone: String, password: String, serviceType: String, licenseNumber: String) -> Unit,
     onGoogleSignUpClick: () -> Unit,
-    onBackToLogin: () -> Unit
+    onBackToLogin: () -> Unit,
+    isLoading: Boolean = false,
+    errorMessage: String? = null
 ) {
     // Uses UserRole declared in AuthOptionScreen.kt
     val isProvider = role == UserRole.SERVICE_PROVIDER.name
@@ -204,16 +206,26 @@ fun SignUpScreen(
                 )
             )
 
+            if (errorMessage != null) {
+                Spacer(modifier = Modifier.height(12.dp))
+                Text(errorMessage, color = AccentRed, fontSize = 12.sp)
+            }
+
             Spacer(modifier = Modifier.height(32.dp))
 
             // Submit Button
             Button(
-                onClick = onSignUpSuccess,
+                onClick = { onSignUp(name, email, phone, password, serviceType, licenseNumber) },
+                enabled = !isLoading && name.isNotBlank() && email.isNotBlank() && password.isNotBlank(),
                 modifier = Modifier.fillMaxWidth().height(48.dp),
                 colors = ButtonDefaults.buttonColors(containerColor = SafeGreen),
                 shape = RoundedCornerShape(14.dp)
             ) {
-                Text("Register", color = Color.White, fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
+                if (isLoading) {
+                    CircularProgressIndicator(modifier = Modifier.size(18.dp), color = Color.White, strokeWidth = 2.dp)
+                } else {
+                    Text("Register", color = Color.White, fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
+                }
             }
 
             Spacer(modifier = Modifier.height(80.dp))

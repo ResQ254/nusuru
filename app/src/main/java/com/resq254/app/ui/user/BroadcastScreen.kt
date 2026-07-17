@@ -17,24 +17,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.resq254.app.ui.theme.*
+import com.resq254.app.viewmodel.AppState
 import kotlin.math.abs
-
-// =====================================================================
-// PLACEHOLDER STUBS
-// Delete this AppState stub once your actual ViewModel state is imported!
-// =====================================================================
-data class AppState(
-    val userLat: Double = -1.2921,
-    val userLng: Double = 36.8219,
-    val nearbyCount: Int = 5,
-    val seconds: Int = 120
-)
-
-// Defining the missing colors locally so it compiles immediately.
-// You can move these into your Color.kt file.
-val RedSOS = Color(0xFFE24B4A)
-val PurplePolice = Color(0xFF6200EE)
-// =====================================================================
 
 @Composable
 fun BroadcastScreen(state: AppState, formatTime: (Int) -> String, onCancel: () -> Unit) {

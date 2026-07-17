@@ -21,7 +21,7 @@ import com.resq254.app.ui.theme.*
 @Composable
 fun ForgotPasswordScreen(
     onBackToLogin: () -> Unit,
-    onResetSent: () -> Unit
+    onResetSent: (String) -> Unit
 ) {
     var email by remember { mutableStateOf("") }
     var submitted by remember { mutableStateOf(false) }
@@ -100,7 +100,7 @@ fun ForgotPasswordScreen(
                 Button(
                     onClick = {
                         submitted = true
-                        onResetSent()
+                        onResetSent(email)
                     },
                     enabled = email.isNotBlank(),
                     modifier = Modifier

@@ -19,34 +19,10 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.resq254.app.ui.theme.*
-
-// =====================================================================
-// PLACEHOLDER STUBS
-// Delete these once you copy over your friend's actual data package files!
-// =====================================================================
-data class Alert(
-    val type: String,
-    val status: String,
-    val title: String,
-    val location: String,
-    val timestampMs: Long,
-    val responders: Int,
-    val description: String
-)
-
-object AppData {
-    fun timeAgo(timestampMs: Long): String = "2 hours ago"
-}
-
-fun getTypeColor(type: String): Color = when(type) {
-    "fire" -> Color(0xFFE24B4A)
-    "medical" -> Color(0xFF4CAF50)
-    "security" -> Color(0xFF2196F3)
-    else -> Color(0xFF00BCD4)
-}
-
-fun getStatusColor(status: String): Color = Color(0xFFFF9800)
-// =====================================================================
+import com.resq254.app.data.Alert
+import com.resq254.app.data.AppData
+import com.resq254.app.data.getTypeColor
+import com.resq254.app.data.getStatusColor
 
 @Composable
 fun AlertDetailScreen(alert: Alert, responding: Boolean, onRespond: () -> Unit, onCall: (String, String) -> Unit, onBack: () -> Unit) {

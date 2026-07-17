@@ -18,10 +18,12 @@ import com.resq254.app.ui.theme.*
 
 @Composable
 fun LoginScreen(
-    onLoginSuccess: () -> Unit,
+    onLogin: (String, String) -> Unit,
     onGoogleLoginClick: () -> Unit,
     onForgotPasswordClicked: () -> Unit,
-    onNavigateToSignUpOptions: () -> Unit
+    onNavigateToSignUpOptions: () -> Unit,
+    isLoading: Boolean = false,
+    errorMessage: String? = null
 ) {
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
@@ -92,16 +94,26 @@ fun LoginScreen(
                 )
             }
 
+            if (errorMessage != null) {
+                Spacer(modifier = Modifier.height(12.dp))
+                Text(errorMessage, color = AccentRed, fontSize = 12.sp)
+            }
+
             Spacer(modifier = Modifier.height(28.dp))
 
             // Login Button
             Button(
-                onClick = onLoginSuccess,
+                onClick = { onLogin(email, password) },
+                enabled = !isLoading && email.isNotBlank() && password.isNotBlank(),
                 modifier = Modifier.fillMaxWidth().height(48.dp),
                 colors = ButtonDefaults.buttonColors(containerColor = SafeGreen),
                 shape = RoundedCornerShape(14.dp)
             ) {
-                Text("Sign In", color = Color.White, fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
+                if (isLoading) {
+                    CircularProgressIndicator(modifier = Modifier.size(18.dp), color = Color.White, strokeWidth = 2.dp)
+                } else {
+                    Text("Sign In", color = Color.White, fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
+                }
             }
 
             Spacer(modifier = Modifier.height(20.dp))

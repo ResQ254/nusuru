@@ -95,8 +95,18 @@ service cloud.firestore {
       // All signed-in users can read service providers
       allow read: if isAuth();
 
-      // Only admins can manage service providers
-      allow write: if isAdmin();
+      // A provider can create their own record at sign-up (doc id == uid,
+      // owner_uid must match); admins can create any record.
+      allow create: if isAdmin() ||
+                       (isAuth() && request.resource.data.owner_uid == request.auth.uid);
+
+      // A provider can update their own record (e.g. go active/inactive);
+      // admins can update any record.
+      allow update: if isAdmin() ||
+                       (isAuth() && resource.data.owner_uid == request.auth.uid);
+
+      // Only admins can delete service providers
+      allow delete: if isAdmin();
     }
 
   }
