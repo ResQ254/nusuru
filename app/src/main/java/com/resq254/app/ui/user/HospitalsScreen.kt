@@ -18,11 +18,11 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.resq254.app.data.AppData
+import com.resq254.app.data.Hospital
 import com.resq254.app.ui.theme.*
 
 @Composable
-fun HospitalsScreen(onBack: () -> Unit, onCall: (String, String) -> Unit) {
+fun HospitalsScreen(hospitals: List<Hospital>, onBack: () -> Unit, onCall: (String, String) -> Unit) {
     Column(modifier = Modifier.fillMaxSize().background(DarkBg)) {
         Row(
             modifier = Modifier.padding(16.dp).clickable { onBack() },
@@ -36,7 +36,7 @@ fun HospitalsScreen(onBack: () -> Unit, onCall: (String, String) -> Unit) {
         Text("Within 5 km of Westlands", color = TextGrey, fontSize = 12.sp, modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp))
         Spacer(modifier = Modifier.height(10.dp))
         LazyColumn(contentPadding = PaddingValues(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-            items(AppData.hospitals) { h ->
+            items(hospitals) { h ->
                 Card(modifier = Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = DarkSurface), shape = RoundedCornerShape(12.dp)) {
                     Column(modifier = Modifier.padding(14.dp)) {
                         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.Top) {

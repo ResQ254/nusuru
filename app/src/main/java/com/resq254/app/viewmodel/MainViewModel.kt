@@ -4,7 +4,11 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.resq254.app.data.Alert
 import com.resq254.app.data.AppData
+import com.resq254.app.data.AuthRepository
+import com.resq254.app.data.FirestoreRepository
+import com.resq254.app.data.Hospital
 import com.resq254.app.data.MyNotification
+import com.resq254.app.data.toAlert
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -14,7 +18,8 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 data class AppState(
-    val alerts: List<Alert> = AppData.sampleAlerts,
+    val alerts: List<Alert> = emptyList(),
+    val hospitals: List<Hospital> = emptyList(),
     val isLoading: Boolean = false,
     val sosActive: Boolean = false,
     val sosId: String? = null,
@@ -35,15 +40,58 @@ data class AppState(
 )
 
 class MainViewModel : ViewModel() {
+    private val authRepository = AuthRepository()
+    private val firestoreRepository = FirestoreRepository()
+
     private val _state = MutableStateFlow(AppState())
     val state: StateFlow<AppState> = _state.asStateFlow()
 
     private var timerJob: Job? = null
     private var nearbyJob: Job? = null
 
+    val currentUserEmail: String? get() = authRepository.currentUser?.email
+
+    init {
+        // Live incidents feed -- replaces the old AppData.sampleAlerts mock.
+        viewModelScope.launch {
+            firestoreRepository.observeActiveIncidents().collect { incidents ->
+                _state.update { it.copy(alerts = incidents.map { doc -> doc.toAlert() }) }
+            }
+        }
+        // Nearby hospitals for the current user location.
+        viewModelScope.launch {
+            val lat = _state.value.userLat
+            val lng = _state.value.userLng
+            val hospitals = try {
+                firestoreRepository.getNearbyHospitals(lat, lng)
+            } catch (e: Exception) {
+                AppData.hospitals
+            }
+            _state.update { it.copy(hospitals = hospitals) }
+        }
+    }
+
     fun startSOS() {
         if (_state.value.sosActive) return
-        _state.update { it.copy(sosActive = true, seconds = 0, nearbyCount = 0) }
+        val uid = authRepository.currentUser?.uid ?: return
+        _state.update { it.copy(sosActive = true, seconds = 0, nearbyCount = 0, isLoading = true) }
+
+        viewModelScope.launch {
+            val id = try {
+                firestoreRepository.reportIncident(
+                    reportedByUid = uid,
+                    incidentType = "medical",
+                    lat = _state.value.userLat,
+                    lng = _state.value.userLng,
+                    addressDescription = "Live location",
+                    notes = "SOS triggered from the app"
+                )
+            } catch (e: Exception) {
+                null
+            }
+            _state.update { it.copy(sosId = id, isLoading = false) }
+        }
+
         timerJob = viewModelScope.launch {
             while (true) {
                 delay(1000)
@@ -63,6 +111,16 @@ class MainViewModel : ViewModel() {
     fun cancelSOS() {
         timerJob?.cancel()
         nearbyJob?.cancel()
+        val id = _state.value.sosId
+        if (id != null) {
+            viewModelScope.launch {
+                try {
+                    firestoreRepository.updateIncidentStatus(id, "resolved")
+                } catch (e: Exception) {
+                    // Best-effort: the SOS still stops locally even if this write fails.
+                }
+            }
+        }
         _state.update { it.copy(sosActive = false, sosId = null, seconds = 0, nearbyCount = 0) }
     }
 
@@ -98,6 +156,8 @@ class MainViewModel : ViewModel() {
     fun markAllRead() {
         _state.update { it.copy(notifications = it.notifications.map { n -> n.copy(read = true) }) }
     }
+
+    fun signOut() = authRepository.signOut()
 
     fun formatTime(secs: Int) = "%02d:%02d".format(secs / 60, secs % 60)
 }

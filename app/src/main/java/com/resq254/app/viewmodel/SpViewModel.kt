@@ -4,10 +4,12 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.resq254.app.data.ActiveJob
 import com.resq254.app.data.Alert
-import com.resq254.app.data.AppData
+import com.resq254.app.data.AuthRepository
 import com.resq254.app.data.CompletedJob
+import com.resq254.app.data.FirestoreRepository
 import com.resq254.app.data.SpJobStatus
 import com.resq254.app.data.SpProfile
+import com.resq254.app.data.toAlert
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -18,7 +20,7 @@ import kotlinx.coroutines.launch
 
 data class SpState(
     val isOnline: Boolean = true,
-    val incomingAlerts: List<Alert> = AppData.sampleAlerts.filter { it.status == "active" },
+    val incomingAlerts: List<Alert> = emptyList(),
     val ringingAlertId: String? = null,
     val activeJob: ActiveJob? = null,
     val elapsedSeconds: Int = 0,
@@ -33,14 +35,26 @@ data class SpState(
 )
 
 class SpViewModel : ViewModel() {
+    private val authRepository = AuthRepository()
+    private val firestoreRepository = FirestoreRepository()
 
     private val _state = MutableStateFlow(SpState())
     val state: StateFlow<SpState> = _state.asStateFlow()
 
     private var timerJob: Job? = null
 
+    val currentUserEmail: String? get() = authRepository.currentUser?.email
+
     init {
-        maybeTriggerNextRing()
+        // Live active-incidents feed from Firestore, replacing the old mock alerts.
+        viewModelScope.launch {
+            firestoreRepository.observeActiveIncidents().collect { incidents ->
+                val myJobId = _state.value.activeJob?.alert?.id
+                val alerts = incidents.map { it.toAlert() }.filter { it.id != myJobId }
+                _state.update { it.copy(incomingAlerts = alerts) }
+                maybeTriggerNextRing()
+            }
+        }
     }
 
     fun toggleOnline() {
@@ -85,6 +99,14 @@ class SpViewModel : ViewModel() {
             )
         }
 
+        viewModelScope.launch {
+            try {
+                firestoreRepository.updateIncidentStatus(alertId, "responding")
+            } catch (e: Exception) {
+                // Best-effort: local job state still advances even if this write fails.
+            }
+        }
+
         timerJob?.cancel()
         timerJob = viewModelScope.launch {
             while (true) {
@@ -114,6 +136,13 @@ class SpViewModel : ViewModel() {
             completedAtMs = System.currentTimeMillis(),
             durationSeconds = _state.value.elapsedSeconds
         )
+        viewModelScope.launch {
+            try {
+                firestoreRepository.updateIncidentStatus(job.alert.id, "resolved")
+            } catch (e: Exception) {
+                // Best-effort: local duty log still records the completion.
+            }
+        }
         _state.update {
             it.copy(
                 activeJob = null,
@@ -128,6 +157,15 @@ class SpViewModel : ViewModel() {
     fun cancelJob() {
         val job = _state.value.activeJob
         timerJob?.cancel()
+        if (job != null) {
+            viewModelScope.launch {
+                try {
+                    firestoreRepository.updateIncidentStatus(job.alert.id, "active")
+                } catch (e: Exception) {
+                    // Best-effort.
+                }
+            }
+        }
         _state.update {
             it.copy(
                 activeJob = null,
@@ -137,6 +175,8 @@ class SpViewModel : ViewModel() {
         }
         maybeTriggerNextRing()
     }
+
+    fun signOut() = authRepository.signOut()
 
     fun formatTime(secs: Int) = "%02d:%02d".format(secs / 60, secs % 60)
 }
